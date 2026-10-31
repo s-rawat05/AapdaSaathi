@@ -1,0 +1,22 @@
+# Web framework & server
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+
+# Database
+SQLAlchemy==2.1.6
+psycopg2-binary==2.9.13
+alembic==1.20.1
+
+# Validation & configuration
+pydantic==2.14.2
+pydantic-settings==2.16.2
+python-dotenv==1.2.4
+email-validator==2.3.0
+
+# Auth: JWT tokens + Argon2 password hashing
+PyJWT==2.15.1
+pwdlib[argon2]==0.3.1
+
+# Testing
+httpx==0.28.1
+pytest==8.4.2

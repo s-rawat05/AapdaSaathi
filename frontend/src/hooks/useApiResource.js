@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { parseApiError } from '../utils/errors'
 
-/** Loads data from an API call on mount. fetcher must be stable (module-level function or useCallback). */
-export default function useApiResource(fetcher) {
+/**
+ * Loads data from an API call on mount, and again whenever refreshKey changes.
+ * fetcher must be stable (module-level function or useCallback).
+ */
+export default function useApiResource(fetcher, refreshKey) {
   const [state, setState] = useState({ data: null, error: null, loading: true })
 
   const run = useCallback(
@@ -21,12 +24,15 @@ export default function useApiResource(fetcher) {
     return () => {
       ignore = true
     }
-  }, [run])
+  }, [run, refreshKey])
 
   const reload = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }))
     setState(await run())
   }, [run])
 
-  return { ...state, reload }
+  // Replace the data locally, e.g. with the server's response after a save
+  const setData = useCallback((data) => setState((s) => ({ ...s, data, error: null })), [])
+
+  return { ...state, reload, setData }
 }

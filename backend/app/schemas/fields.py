@@ -41,6 +41,12 @@ OptionalLongText = Annotated[
 ]
 LocationText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=255)]
 
+OptionalPersonName = Annotated[FullName | None, BeforeValidator(_blank_to_none)]
+OptionalRelationship = Annotated[
+    Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=50)] | None,
+    BeforeValidator(_blank_to_none),
+]
+
 Latitude = Annotated[float, Field(ge=-90, le=90)]
 Longitude = Annotated[float, Field(ge=-180, le=180)]
 Age = Annotated[int, Field(ge=0, le=120)]

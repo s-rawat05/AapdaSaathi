@@ -1,5 +1,6 @@
 import { RefreshCw } from 'lucide-react'
 import AlertBanner from '../components/AlertBanner'
+import HelpRequestsPanel from '../components/admin/HelpRequestsPanel'
 import DashboardHeader from '../components/DashboardHeader'
 import FullPageSpinner from '../components/FullPageSpinner'
 import useApiResource from '../hooks/useApiResource'
@@ -23,7 +24,8 @@ export default function AdminDashboard() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <DashboardHeader subtitle="Registered accounts. Alert management arrives in Phase 3." />
+      <DashboardHeader subtitle="Help requests and registered accounts. Full alert management arrives in the admin phase." />
+      <HelpRequestsPanel />
       <AlertBanner>{error}</AlertBanner>
       {loading && !users && <FullPageSpinner label="Loading users…" />}
 

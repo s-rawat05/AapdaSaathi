@@ -16,6 +16,8 @@ class Notification(CreatedAtMixin, Base):
     __table_args__ = (
         # Unread-count / inbox query per user
         Index("ix_notifications_user_id_is_read", "user_id", "is_read"),
+        # Newest-first history per user
+        Index("ix_notifications_user_id_created_at", "user_id", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

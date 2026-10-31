@@ -7,9 +7,27 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   RESIDENT: '/resident',
+  RESIDENT_PROFILE: '/resident/profile',
+  RESIDENT_ALERTS: '/resident/alerts',
+  RESIDENT_NOTIFICATIONS: '/resident/notifications',
+  RESIDENT_CONTACTS: '/resident/contacts',
+  RESIDENT_SETTINGS: '/resident/settings',
   ADMIN: '/admin',
   VOLUNTEER: '/volunteer',
 }
+
+// How often the resident portal checks for new alerts (only while the tab is visible)
+export const POLL_INTERVAL_MS = 20000
+
+// National numbers that work across India. State control-room numbers vary, so they are not listed.
+export const HELPLINES = [
+  { number: '112', label: 'National emergency (police, fire, ambulance)' },
+  { number: '1078', label: 'NDMA disaster helpline' },
+  { number: '108', label: 'Ambulance (most states)' },
+  { number: '101', label: 'Fire' },
+]
+
+export const RELATIONSHIPS = ['Parent', 'Child', 'Spouse', 'Sibling', 'Relative', 'Neighbour', 'Friend', 'Caregiver', 'Other']
 
 export const ROLES = {
   ADMIN: 'ADMIN',
@@ -30,11 +48,16 @@ export const ROLE_HOME = {
   [ROLES.VOLUNTEER]: ROUTES.VOLUNTEER,
 }
 
-// Roles allowed on each dashboard route
+// Roles allowed on each dashboard route (and everything below it)
 export const ROUTE_ROLES = {
   [ROUTES.ADMIN]: [ROLES.ADMIN],
   [ROUTES.RESIDENT]: [ROLES.RESIDENT],
   [ROUTES.VOLUNTEER]: [ROLES.VOLUNTEER],
+}
+
+export function rolesForPath(path) {
+  const base = Object.keys(ROUTE_ROLES).find((route) => path === route || path?.startsWith(`${route}/`))
+  return base ? ROUTE_ROLES[base] : null
 }
 
 export const ASSISTANCE_TYPES = [
@@ -51,3 +74,6 @@ export const AVAILABILITY_STATUSES = [
   { value: 'BUSY', label: 'Busy' },
   { value: 'OFFLINE', label: 'Offline' },
 ]
+
+// Resident alert-delivery preferences stored on the profile
+export const PREFERENCE_KEYS = ['voice_alerts_enabled', 'visual_alerts_enabled', 'vibration_enabled', 'simple_language_enabled']

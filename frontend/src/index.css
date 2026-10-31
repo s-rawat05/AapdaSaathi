@@ -9,6 +9,22 @@
   --color-brand-500: #ef4444;
   --color-brand-600: #dc2626;
   --color-brand-700: #b91c1c;
+
+  /* Navy: resident portal chrome */
+  --color-navy-50: #f0f4fa;
+  --color-navy-100: #dde6f3;
+  --color-navy-200: #b8c9e3;
+  --color-navy-600: #1f3c6e;
+  --color-navy-700: #18305a;
+  --color-navy-800: #112446;
+  --color-navy-900: #0b1a33;
+
+  --animate-emergency-flash: emergency-flash 1s ease-in-out infinite;
+
+  @keyframes emergency-flash {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(220 38 38 / 0.9); }
+    50% { box-shadow: 0 0 0 14px rgb(220 38 38 / 0); }
+  }
 }
 
 @layer base {
@@ -20,5 +36,12 @@
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /* Flashing is an accessibility hazard for some users: honour the OS setting */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-emergency-flash {
+      animation: none;
+    }
   }
 }

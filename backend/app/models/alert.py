@@ -26,6 +26,7 @@ class Alert(CreatedAtMixin, Base):
         ),
         # "Active alerts that have not expired yet" is the hot query
         Index("ix_alerts_status_expires_at", "status", "expires_at"),
+        Index("ix_alerts_target_state_target_district", "target_state", "target_district"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -38,6 +39,10 @@ class Alert(CreatedAtMixin, Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     instructions: Mapped[str | None] = mapped_column(Text)
     affected_location: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Structured targeting. An alert reaches a resident if their state/district match, or they are
+    # within radius_km of (latitude, longitude). An alert with no targeting at all reaches everyone.
+    target_state: Mapped[str | None] = mapped_column(String(100))
+    target_district: Mapped[str | None] = mapped_column(String(100))
     latitude: Mapped[float | None] = mapped_column(Float)
     longitude: Mapped[float | None] = mapped_column(Float)
     radius_km: Mapped[float | None] = mapped_column(Float)

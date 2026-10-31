@@ -4,12 +4,12 @@ import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react'
 import AlertBanner from '../components/AlertBanner'
 import FormField from '../components/FormField'
 import useAuth from '../hooks/useAuth'
-import { ROLE_HOME, ROUTE_ROLES, ROUTES } from '../utils/constants'
+import { ROLE_HOME, ROUTES, rolesForPath } from '../utils/constants'
 import { parseApiError } from '../utils/errors'
 
 function destinationFor(user, from) {
   // Return to the page the user originally asked for, but only if their role may see it
-  if (from && ROUTE_ROLES[from]?.includes(user.role)) return from
+  if (from && rolesForPath(from)?.includes(user.role)) return from
   return ROLE_HOME[user.role]
 }
 

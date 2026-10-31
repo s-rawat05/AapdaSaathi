@@ -2,7 +2,7 @@
 
 Disaster management and emergency assistance platform — built for the **SAARTHI'26 Hackathon**.
 
-> **Status:** Phase 2 complete — PostgreSQL schema (7 tables, Alembic migrations), JWT authentication, role-based access control, profile APIs and frontend auth. Alerts, notifications, responses and volunteer assignment *workflows* (APIs/UI) start in Phase 3; their tables already exist.
+> **Status:** Phase 3 complete — resident portal: dashboard, profile & map location, emergency alerts with I'M SAFE / I NEED HELP responses, accessible voice/visual/vibration alerts, notification history, emergency contacts and near-real-time updates. Volunteer assignment workflow and the full admin portal come in later phases.
 
 ## Tech stack
 
@@ -18,11 +18,11 @@ Disaster management and emergency assistance platform — built for the **SAARTH
 ```
 AapdaSaathi/
 ├── frontend/src/
-│   ├── components/   Navbar, ProtectedRoute, RoleBasedRoute, GuestRoute, FormField, AlertBanner, ...
+│   ├── components/   Navbar, route guards, FormField, alerts/ (AlertCard, ResponseButtons, overlay), location/ (map), ...
 │   ├── context/      AuthProvider (session state), authContext
 │   ├── hooks/        useAuth, useApiResource, useApiStatus
-│   ├── layouts/      MainLayout
-│   ├── pages/        Landing, Login, Register, Resident/Volunteer/Admin dashboards, NotFound
+│   ├── layouts/      MainLayout, ResidentLayout (sidebar + polling provider)
+│   ├── pages/        Landing, Login, Register, resident/* (6 pages), Volunteer/Admin dashboards, NotFound
 │   ├── services/     api.js (Axios + interceptors), authService, profileService, tokenStorage
 │   └── utils/        constants (routes, roles), errors (FastAPI error parsing)
 ├── backend/
@@ -33,9 +33,9 @@ AapdaSaathi/
 │   │   ├── database/ base.py, connection.py, init_db.py, seed_admin.py
 │   │   ├── models/   One file per table + enums.py
 │   │   ├── schemas/  Pydantic request/response models
-│   │   ├── services/ user_service, profile_service, response_service
+│   │   ├── services/ user, profile, alert, notification and response services
 │   │   └── main.py
-│   └── tests/        pytest (52 tests)
+│   └── tests/        pytest (81 tests)
 └── .vscode/          Interpreter, tasks (servers, tests, migrate, seed), debugger
 ```
 
@@ -68,10 +68,51 @@ All enum columns are `VARCHAR` + named `CHECK` constraints (easy to extend via m
 | GET / PUT | `/api/volunteers/profile` | VOLUNTEER (own profile only) |
 | GET | `/api/admin/users?role=&skip=&limit=` | ADMIN |
 | POST | `/api/admin/users` | ADMIN — creates another administrator |
+| GET | `/api/residents/alerts` | RESIDENT — active alerts targeting them, most severe first, with `my_response` and `response_status` (`SAFE` / `NEEDS_HELP` / `NO_RESPONSE`) |
+| GET | `/api/residents/notifications?unread_only=&skip=&limit=` | RESIDENT — own notifications, newest first |
+| PATCH | `/api/residents/notifications/{id}/read`, `/api/residents/notifications/read-all` | RESIDENT — own notifications only (others → 404) |
+| GET | `/api/residents/updates` | RESIDENT — tiny polling payload (active alert ids, unread count, latest notification id) |
+| POST | `/api/responses` | RESIDENT — `{alert_id, status}`; 409 if already responded or alert ended; 404 if the alert does not target them |
+| GET | `/api/responses/my` | RESIDENT — own response history |
+| PUT | `/api/responses/{id}` | RESIDENT — change own response (timestamp refreshed) |
+| POST | `/api/admin/alerts` | ADMIN — create a **simulated (DEMO)** alert and notify targeted residents |
+| GET | `/api/admin/help-requests` | ADMIN — residents answering NEEDS_HELP to active alerts |
 
 `PUT` profile endpoints are partial updates: only fields in the body change. Interactive docs: http://localhost:8000/docs (click **Authorize** and paste a token from `/api/auth/login`).
 
 Status codes: `401` not logged in / invalid / expired token (`"Token has expired"`), `403` wrong role or disabled account, `409` duplicate email, `422` validation error, `503` database unavailable.
+
+## Resident portal (Phase 3)
+
+Routes: `/resident` (dashboard), `/resident/profile`, `/resident/alerts`, `/resident/notifications`, `/resident/contacts`, `/resident/settings`.
+
+- **Alert targeting** — an alert reaches a resident if `target_state` (and `target_district`, if set) match their profile (case-insensitive), **or** their map location is within `radius_km` of the alert's coordinates. An alert with no targeting reaches everyone.
+- **Official vs simulated** — `source = SACHET` is shown as *Official alert · SACHET*; everything created through the API is forced to `DEMO` and shown as *Simulated alert · demo* (also spoken as "practice alert"). The API cannot create SACHET alerts.
+- **Severity colours** — stored values follow CAP (used by SACHET): `MINOR`→Low (green), `MODERATE` (yellow), `SEVERE`→High (orange), `EXTREME` (red).
+- **Responses** — one row per resident per alert (unique constraint). No row = `NO_RESPONSE`; nobody is ever marked safe implicitly. NEEDS_HELP (and NEEDS_HELP → SAFE) creates RESPONSE notifications for all admins and appears in the admin dashboard's *Residents needing help* panel.
+- **Real-time** — the portal polls `GET /api/residents/updates` every 20 s **only while the tab is visible**, backs off on errors, and fetches full lists only when that payload changes. A new alert opens a full-screen alert dialog with the response buttons.
+- **Accessibility** — voice (Web Speech API, `en-IN`, simple-language mode), vibration (`navigator.vibrate`, feature-detected) and flashing border (disabled under `prefers-reduced-motion`). These preferences only add channels; the on-screen alert, instructions and response buttons are always shown. Every alert also has a manual *Read aloud* button because browsers may block speech until the user has interacted with the page.
+- **Location** — manual lat/lon, browser geolocation (permission denial falls back to manual entry), or tap on a Leaflet/OpenStreetMap map; optional rounding to ~1 km. Location is optional.
+- **Emergency contact** — stored on the resident profile (`emergency_contact` phone, `emergency_contact_name`, `emergency_contact_relationship`); a name without a phone is rejected by a CHECK constraint.
+
+### Creating a demo alert
+
+Open http://localhost:8000/docs, log in as the admin via `POST /api/auth/login`, click **Authorize**, then call `POST /api/admin/alerts`, e.g.:
+
+```json
+{
+  "event_name": "Flash flood warning",
+  "disaster_type": "Flood",
+  "severity": "EXTREME",
+  "description": "River levels are rising quickly after heavy rain.",
+  "instructions": "Move to higher ground. Do not cross flowing water.",
+  "affected_location": "Dehradun district",
+  "target_state": "Uttarakhand",
+  "target_district": "Dehradun"
+}
+```
+
+Logged-in residents in that district see it within about 20 seconds.
 
 ## Prerequisites
 

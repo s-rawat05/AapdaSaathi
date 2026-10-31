@@ -1,8 +1,9 @@
-import { AlertCircle, Info } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 
 const STYLES = {
   error: { box: 'border-red-200 bg-red-50 text-red-800', Icon: AlertCircle },
   info: { box: 'border-amber-200 bg-amber-50 text-amber-800', Icon: Info },
+  success: { box: 'border-green-200 bg-green-50 text-green-800', Icon: CheckCircle2 },
 }
 
 export default function AlertBanner({ type = 'error', children }) {

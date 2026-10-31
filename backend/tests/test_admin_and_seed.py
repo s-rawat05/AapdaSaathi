@@ -83,3 +83,50 @@ def test_seed_config_validation(monkeypatch):
     )
     with pytest.raises(SeedError, match="password"):
         load_config()
+
+
+# ---------- demo accounts ----------
+
+
+def _demo_settings(**overrides):
+    values = {
+        "ENVIRONMENT": "development",
+        "DEMO_RESIDENT_EMAIL": "resident.demo@example.com",
+        "DEMO_RESIDENT_PASSWORD": "DemoPass1",
+        "DEMO_VOLUNTEER_EMAIL": "volunteer.demo@example.com",
+        "DEMO_VOLUNTEER_PASSWORD": "DemoPass2",
+    }
+    values.update(overrides)
+    return settings.model_copy(update=values)
+
+
+def test_seed_demo_creates_working_accounts_once(client, db, monkeypatch):
+    from app.database import seed_demo as demo_module
+
+    monkeypatch.setattr(demo_module, "settings", _demo_settings())
+    first = demo_module.seed_demo(db)
+    assert [(u.role, created) for u, created in first] == [(UserRole.RESIDENT, True), (UserRole.VOLUNTEER, True)]
+    assert [created for _, created in demo_module.seed_demo(db)] == [False, False]
+
+    res = client.post("/api/auth/login", json={"email": "resident.demo@example.com", "password": "DemoPass1"})
+    assert res.status_code == 200 and res.json()["role"] == "RESIDENT"
+    profile = client.get("/api/residents/profile", headers=auth(res.json()["access_token"])).json()
+    assert (profile["state"], profile["district"]) == ("Uttarakhand", "Dehradun")
+    assert profile["completion"]["percent"] == 100
+
+
+def test_seed_demo_safety_rules(client, db, monkeypatch):
+    from app.database import seed_demo as demo_module
+
+    monkeypatch.setattr(demo_module, "settings", _demo_settings(ENVIRONMENT="production"))
+    with pytest.raises(demo_module.SeedError, match="production"):
+        demo_module.seed_demo(db)
+
+    client.post("/api/auth/register", json=resident_payload(email="taken@example.com"))
+    monkeypatch.setattr(demo_module, "settings", _demo_settings(DEMO_VOLUNTEER_EMAIL="taken@example.com"))
+    with pytest.raises(demo_module.SeedError, match="not touching it"):
+        demo_module.seed_demo(db)
+
+    monkeypatch.setattr(demo_module, "settings", _demo_settings(DEMO_RESIDENT_PASSWORD="weak"))
+    with pytest.raises(demo_module.SeedError, match="password"):
+        demo_module.seed_demo(db)

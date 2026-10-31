@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     ADMIN_FULL_NAME: str = "AapdaSaathi Administrator"
     ADMIN_PHONE: str = ""
 
+    # Demo accounts for presentations, used only by python -m app.database.seed_demo (refuses in production)
+    DEMO_RESIDENT_EMAIL: str = ""
+    DEMO_RESIDENT_PASSWORD: str = Field(default="", repr=False)
+    DEMO_VOLUNTEER_EMAIL: str = ""
+    DEMO_VOLUNTEER_PASSWORD: str = Field(default="", repr=False)
+
     @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, value: str) -> str:

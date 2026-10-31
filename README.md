@@ -151,6 +151,7 @@ Edit `backend/.env`:
 | `TEST_DATABASE_URL` | Same, but database `aapdasaathi_test` (must differ — tests wipe it). Empty = SQLite |
 | `SECRET_KEY` | `python -c "import secrets; print(secrets.token_urlsafe(64))"` — the app refuses to start with a missing/short key |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Initial admin (password ≥ 8 chars with a letter and a number) |
+| `DEMO_RESIDENT_*`, `DEMO_VOLUNTEER_*` | Optional demo logins created by `seed_demo` (development only) |
 | `CORS_ORIGINS` | Frontend origin(s), default `http://localhost:5173` |
 
 Then create the schema and the first administrator:
@@ -159,6 +160,14 @@ Then create the schema and the first administrator:
 python -m app.database.init_db
 python -m app.database.seed_admin
 ```
+
+Optional, for demos: create a demo resident (Dehradun, Uttarakhand) and a demo volunteer from the `DEMO_*` variables in `backend/.env`:
+
+```bash
+python -m app.database.seed_demo
+```
+
+Log in with `DEMO_RESIDENT_EMAIL` / `DEMO_RESIDENT_PASSWORD` (or the volunteer pair). The script is idempotent, never modifies an existing account of another role, and refuses to run when `ENVIRONMENT=production`.
 
 `init_db` applies all Alembic migrations (`alembic upgrade head`). `seed_admin` is idempotent and refuses to promote an existing non-admin account. After that, admins can create more admins via `POST /api/admin/users`. There is no public way to create an admin.
 

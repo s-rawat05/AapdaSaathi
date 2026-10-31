@@ -57,6 +57,15 @@
         "cwd": "${workspaceFolder}/backend"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "DB: seed demo accounts",
+      "type": "shell",
+      "command": "${workspaceFolder}/backend/venv/Scripts/python.exe -m app.database.seed_demo",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "problemMatcher": []
     }
   ]
 }
